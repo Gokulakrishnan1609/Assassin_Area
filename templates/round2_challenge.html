@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHANTOM NET — Secure Access Portal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=VT323&display=swap');
+
+  :root {
+    --red: #ff0033;
+    --red-dim: #8b0014;
+    --bg: #020508;
+    --surface: #060d12;
+    --border: #0f2a1e;
+    --green: #00ff88;
+    --green-dim: #00552d;
+    --text: #a8c4b0;
+    --muted: #3a5040;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 3px,
+      rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.4;
+  }
+
+  #login-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .skull-art {
+    font-size: 4rem;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 0 18px var(--red));
+    animation: pulse-red 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { filter: drop-shadow(0 0 12px var(--red)); }
+    50% { filter: drop-shadow(0 0 28px var(--red)) drop-shadow(0 0 50px var(--red-dim)); }
+  }
+
+  .site-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--red);
+    letter-spacing: 0.3em;
+    text-shadow: 0 0 20px var(--red), 0 0 40px var(--red-dim);
+    margin-bottom: 0.3rem;
+  }
+
+  .site-sub {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    margin-bottom: 2.5rem;
+  }
+
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--red-dim);
+    border-top: 2px solid var(--red);
+    width: 100%;
+    max-width: 420px;
+    padding: 2.2rem;
+    position: relative;
+    box-shadow: 0 0 40px rgba(255,0,51,0.08), inset 0 0 40px rgba(0,0,0,0.5);
+  }
+
+  .login-box::before {
+    content: '[ AUTHENTICATED ACCESS ONLY ]';
+    position: absolute;
+    top: -10px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    color: var(--red);
+    font-size: 0.62rem;
+    padding: 0 0.8rem;
+    letter-spacing: 0.15em;
+    white-space: nowrap;
+  }
+
+  .login-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .login-input {
+    width: 100%;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid #1a3028;
+    border-bottom: 1px solid var(--green-dim);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1rem;
+    padding: 0.7rem 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 1.3rem;
+    letter-spacing: 0.05em;
+  }
+
+  .login-input:focus {
+    border-color: var(--green-dim);
+    box-shadow: 0 0 12px rgba(0,255,136,0.1);
+  }
+
+  .login-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--red);
+    color: var(--red);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    padding: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+
+  .login-btn:hover {
+    background: var(--red);
+    color: #000;
+    box-shadow: 0 0 25px rgba(255,0,51,0.4);
+  }
+
+  .error-msg {
+    display: none;
+    background: rgba(139,0,20,0.3);
+    border: 1px solid var(--red-dim);
+    color: #ff6680;
+    font-size: 0.78rem;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  .corner-tag {
+    position: fixed;
+    font-size: 0.62rem;
+    color: #1a2e22;
+    letter-spacing: 0.1em;
+  }
+  .corner-tag.tl { top: 1rem; left: 1rem; }
+  .corner-tag.tr { top: 1rem; right: 1rem; }
+  .corner-tag.bl { bottom: 1rem; left: 1rem; }
+  .corner-tag.br { bottom: 1rem; right: 1rem; }
+
+  .blink { animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  #records-page {
+    display: none;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    animation: fadeIn 0.6s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .top-bar-left {
+    display: flex; flex-direction: column; gap: 0.2rem;
+  }
+
+  .portal-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: var(--red);
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 10px var(--red);
+  }
+
+  .session-info {
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .access-badge {
+    background: rgba(255,0,51,0.1);
+    border: 1px solid var(--red-dim);
+    color: var(--red);
+    font-size: 0.65rem;
+    padding: 0.3rem 0.8rem;
+    letter-spacing: 0.2em;
+  }
+
+  .logout-btn {
+    background: var(--red);
+    color: #000;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.65rem;
+    cursor: pointer;
+    margin-left: 1rem;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+
+  .logout-btn:hover {
+    background: #ff6680;
+    box-shadow: 0 0 15px rgba(255,0,51,0.5);
+  }
+
+  .section-header {
+    font-family: 'VT323', monospace;
+    font-size: 1.4rem;
+    color: var(--green);
+    letter-spacing: 0.15em;
+    margin-bottom: 0.3rem;
+  }
+
+  .section-line {
+    height: 1px;
+    background: linear-gradient(to right, var(--green-dim), transparent);
+    margin-bottom: 1.5rem;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--green-dim);
+    padding: 1.2rem;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    color: var(--red);
+    font-weight: 900;
+    text-shadow: 0 0 15px var(--red);
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    margin-top: 0.3rem;
+  }
+
+  .records-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  .records-table th {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+
+  .records-table td {
+    padding: 0.75rem 0.9rem;
+    border-bottom: 1px solid rgba(15,42,30,0.7);
+    vertical-align: middle;
+    transition: background 0.15s;
+  }
+
+  .records-table tr:hover td {
+    background: rgba(0,255,136,0.02);
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+  .dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-red   { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+  .dot-yellow{ background: #ffcc00;       box-shadow: 0 0 6px #ffcc00; }
+
+  .method-tag {
+    background: rgba(139,0,20,0.25);
+    border: 1px solid var(--red-dim);
+    color: #ff6680;
+    font-size: 0.67rem;
+    padding: 0.15rem 0.5rem;
+    letter-spacing: 0.08em;
+  }
+
+  .flag-row td {
+    background: rgba(0,255,136,0.04) !important;
+    border-top: 1px solid var(--green-dim);
+    border-bottom: 1px solid var(--green-dim);
+  }
+
+  .flag-label {
+    font-size: 0.6rem;
+    color: var(--green-dim);
+    letter-spacing: 0.2em;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  /* FLAG UNLOCK STYLES */
+  .flag-locked {
+    background: rgba(139,0,20,0.3);
+    border: 1px solid var(--red-dim);
+    padding: 1rem;
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  .flag-unlock-hint {
+    font-size: 0.7rem;
+    color: #ff6680;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.8rem;
+    font-style: italic;
+  }
+
+  .unlock-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .time-input {
+    background: rgba(0,0,0,0.8);
+    border: 1px solid var(--red-dim);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    padding: 0.5rem 0.7rem;
+    width: 100px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .time-input:focus {
+    border-color: var(--green-dim);
+    box-shadow: 0 0 8px rgba(0,255,136,0.2);
+  }
+
+  .time-input::placeholder {
+    color: var(--muted);
+  }
+
+  .unlock-btn {
+    background: transparent;
+    border: 1px solid var(--green-dim);
+    color: var(--green);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .unlock-btn:hover {
+    background: var(--green-dim);
+    color: #000;
+    box-shadow: 0 0 15px rgba(0,255,136,0.4);
+  }
+
+  .flag-unlocked {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.78rem;
+    color: var(--green);
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 10px var(--green);
+    word-break: break-all;
+    background: rgba(0,255,136,0.08);
+    border: 1px solid var(--green-dim);
+    padding: 0.8rem;
+    border-radius: 4px;
+    animation: glowUnlock 0.8s ease;
+  }
+
+  @keyframes glowUnlock {
+    0% {
+      box-shadow: 0 0 5px var(--green), inset 0 0 5px var(--green);
+      transform: scale(0.98);
+    }
+    50% {
+      box-shadow: 0 0 20px var(--green), inset 0 0 20px var(--green-dim);
+    }
+    100% {
+      box-shadow: 0 0 10px var(--green);
+      transform: scale(1);
+    }
+  }
+
+  .unlock-success-msg {
+    color: var(--green);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+    animation: slideDown 0.4s ease;
+  }
+
+  .unlock-error-msg {
+    color: #ff6680;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+    animation: shake 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .record-id {
+    color: #2a4a38;
+    font-size: 0.75rem;
+  }
+
+  .victim-name { color: #c8d8cc; }
+  .date-cell   { color: var(--muted); font-size: 0.77rem; }
+  .loc-cell    { color: #4a7060; font-size: 0.77rem; }
+
+  .footer-bar {
+    margin-top: 3rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.63rem;
+    color: #1a2e22;
+    letter-spacing: 0.1em;
+  }
+
+  .prompt-line {
+    margin-top: 1.5rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+
+  @keyframes glitch {
+    0%,100% { text-shadow: 0 0 20px var(--red), 0 0 40px var(--red-dim); clip-path: none; transform: none; }
+    92%      { transform: none; }
+    93%      { transform: translateX(-3px); clip-path: inset(10% 0 80% 0); text-shadow: 3px 0 #00ffff, -3px 0 var(--red); }
+    94%      { transform: translateX(3px); clip-path: inset(60% 0 20% 0); }
+    95%      { transform: none; clip-path: none; }
+  }
+  .site-title { animation: glitch 6s infinite; }
+
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: 1fr; }
+    .top-bar { flex-direction: column; align-items: flex-start; }
+    .unlock-controls { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="corner-tag tl">SYS::AUTH // v4.2.1</div>
+<div class="corner-tag tr">ENCRYPT::AES-256-CTR</div>
+<div class="corner-tag bl">NODE::PHANTOM-7 // DARK-WEB</div>
+<div class="corner-tag br">TOR::ACTIVE</div>
+
+<!-- ══════════════ LOGIN PAGE ══════════════ -->
+<div id="login-page">
+  <div class="skull-art">☠</div>
+  <div class="site-title">PHANTOM NET</div>
+  <div class="site-sub">[ CONTRACTOR RECORDS MANAGEMENT SYSTEM ]</div>
+
+  <div class="login-box">
+    <div class="error-msg" id="error-msg">⚠ ACCESS DENIED — INVALID CREDENTIALS</div>
+
+    <label class="login-label">Operator ID</label>
+    <input class="login-input" id="username" type="text" placeholder="enter operator id..." autocomplete="off" spellcheck="false">
+
+    <label class="login-label">Authorization Key</label>
+    <input class="login-input" id="password" type="password" placeholder="••••••••••••" autocomplete="off">
+
+    <button class="login-btn" onclick="attemptLogin()">▶ AUTHENTICATE</button>
+
+    <div class="prompt-line">
+      UNAUTHORIZED ACCESS IS A CRIMINAL OFFENSE<br>
+      ALL SESSIONS ARE MONITORED &amp; LOGGED<span class="blink">_</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ RECORDS PAGE ══════════════ -->
+<div id="records-page">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="portal-name">☠ PHANTOM NET</div>
+      <div class="session-info">SESSION: <span style="color:#2a5a3a" id="session-id">—</span> &nbsp;|&nbsp; OPERATOR: <span style="color:#4a7060" id="logged-user">—</span> &nbsp;|&nbsp; IP: 10.0.0.██</div>
+    </div>
+    <div class="access-badge">LEVEL-5 CLEARANCE <button class="logout-btn" onclick="logout()">LOGOUT</button></div>
+  </div>
+
+  <div class="section-header">// CONTRACTOR OVERVIEW</div>
+  <div class="section-line"></div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">23</div>
+      <div class="stat-label">TOTAL CONTRACTS</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">04</div>
+      <div class="stat-label">ACTIVE CONTRACTS</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">02</div>
+      <div class="stat-label">PENDING PAYMENTS</div>
+    </div>
+  </div>
+
+  <div class="section-header">// CONTRACT EXECUTION LOG</div>
+  <div class="section-line"></div>
+
+  <table class="records-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Target</th>
+        <th>Date</th>
+        <th>Location</th>
+        <th>Method</th>
+        <th>Status</th>
+        <th>Contract Notes</th>
+      </tr>
+    </thead>
+    <tbody id="records-tbody">
+      <!-- Records loaded dynamically -->
+    </tbody>
+  </table>
+
+  <div class="footer-bar">
+    <span>PHANTOM NET // CONTRACTOR MANAGEMENT SYSTEM // CLASSIFIED</span>
+    <span>SESSION EXPIRES IN: <span id="countdown">14:58</span></span>
+  </div>
+</div>
+
+<script>
+  // ─── Generate fake session ID ───
+  function genSession() {
+    return 'PHX-' + Math.random().toString(36).substring(2,8).toUpperCase();
+  }
+
+  // ─── Get status dot class ───
+  function getStatusDot(status) {
+    const s = status.toLowerCase();
+    if (s.includes('closed')) return 'dot-green';
+    if (s.includes('active')) return 'dot-yellow';
+    if (s.includes('compromised')) return 'dot-red';
+    if (s.includes('review')) return 'dot-yellow';
+    return 'dot-green';
+  }
+
+  // ─── Load records ───
+  async function loadRecords() {
+    try {
+      const response = await fetch('/api/records');
+      const data = await response.json();
+
+      if (!data.success) {
+        window.location.href = '/';
+        return;
+      }
+
+      document.getElementById('logged-user').textContent = data.operator;
+      document.getElementById('session-id').textContent = genSession();
+
+      const tbody = document.getElementById('records-tbody');
+      tbody.innerHTML = '';
+
+      data.contracts.forEach((contract, idx) => {
+        const isFlagRow = contract.ref === 'C-009';
+        const row = document.createElement('tr');
+        if (isFlagRow) row.classList.add('flag-row');
+
+        const dotClass = getStatusDot(contract.status);
+
+        if (isFlagRow) {
+          row.innerHTML = `
+            <td class="record-id">${contract.ref}</td>
+            <td class="victim-name" style="color:var(--green)">[ CLASSIFIED ]</td>
+            <td class="date-cell">2024-██-██</td>
+            <td class="loc-cell">REDACTED</td>
+            <td><span class="method-tag" style="border-color:var(--green-dim);color:var(--green)">${contract.method}</span></td>
+            <td><span class="status-dot ${dotClass}"></span>${contract.status}</td>
+            <td>
+              <span class="flag-label">// PROOF OF ACCESS TOKEN //</span>
+              <div class="flag-locked" id="flag-unlock-section">
+                <div class="flag-unlock-hint">🔒 FLAG LOCKED — Enter victim death time to unlock</div>
+                <div class="unlock-controls">
+                  <input type="text" class="time-input" id="time-input" placeholder="HH:MM" maxlength="5">
+                  <button class="unlock-btn" onclick="unlockFlag()">UNLOCK</button>
+                </div>
+                <div id="unlock-message"></div>
+              </div>
+            </td>
+          `;
+        } else {
+          row.innerHTML = `
+            <td class="record-id">${contract.ref}</td>
+            <td class="victim-name">${contract.target}</td>
+            <td class="date-cell">${contract.date}</td>
+            <td class="loc-cell">${contract.location}</td>
+            <td><span class="method-tag">${contract.method}</span></td>
+            <td><span class="status-dot ${dotClass}"></span>${contract.status}</td>
+            <td class="date-cell">${contract.notes}</td>
+          `;
+        }
+
+        tbody.appendChild(row);
+      });
+
+      // Store flag for later use
+      window.storedFlag = data.flag;
+
+    } catch (error) {
+      console.error('Error loading records:', error);
+    }
+  }
+
+  // ─── Unlock Flag Function ───
+  async function unlockFlag() {
+    const timeInput = document.getElementById('time-input').value.trim();
+    const messageDiv = document.getElementById('unlock-message');
+
+    if (!timeInput) {
+      messageDiv.innerHTML = '<div class="unlock-error-msg">⚠ Please enter a time</div>';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/unlock-flag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ time: timeInput })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Flag unlocked!
+        const unlockedHTML = `
+          <div class="unlock-success-msg">✓ ${data.message}</div>
+          <div class="flag-unlocked">${data.flag}</div>
+        `;
+        document.getElementById('flag-unlock-section').innerHTML = unlockedHTML;
+      } else {
+        messageDiv.innerHTML = `<div class="unlock-error-msg">${data.message}</div>`;
+        document.getElementById('time-input').value = '';
+      }
+    } catch (error) {
+      messageDiv.innerHTML = '<div class="unlock-error-msg">⚠ Error unlocking flag</div>';
+      console.error('Unlock error:', error);
+    }
+  }
+
+  // ─── LOGIN LOGIC ───
+  async function attemptLogin() {
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
+    const err = document.getElementById('error-msg');
+
+    if (!user || !pass) {
+      err.textContent = '⚠ FIELDS CANNOT BE EMPTY';
+      err.style.display = 'block';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        err.style.display = 'none';
+        document.getElementById('login-page').style.display = 'none';
+        document.getElementById('records-page').style.display = 'block';
+        loadRecords();
+      } else {
+        err.textContent = '⚠ ACCESS DENIED — INVALID CREDENTIALS';
+        err.style.display = 'block';
+        document.getElementById('password').value = '';
+
+        const box = document.querySelector('.login-box');
+        box.style.animation = 'shake 0.4s ease';
+        setTimeout(() => box.style.animation = '', 400);
+      }
+    } catch (error) {
+      err.textContent = '⚠ CONNECTION ERROR';
+      err.style.display = 'block';
+      console.error('Login error:', error);
+    }
+  }
+
+  // ─── LOGOUT ───
+  async function logout() {
+    await fetch('/api/logout', { method: 'POST' });
+    document.getElementById('records-page').style.display = 'none';
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+  }
+
+  // ─── Session countdown ───
+  let seconds = 898;
+  setInterval(() => {
+    if (seconds > 0) seconds--;
+    const m = String(Math.floor(seconds / 60)).padStart(2,'0');
+    const s = String(seconds % 60).padStart(2,'0');
+    document.getElementById('countdown').textContent = m + ':' + s;
+  }, 1000);
+
+  // ─── Enter key support ───
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('login-page').style.display !== 'none') {
+        attemptLogin();
+      } else if (document.getElementById('time-input') === document.activeElement) {
+        unlockFlag();
+      }
+    }
+  });
+
+  // ─── Shake animation ───
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes shake {
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-8px)}
+      40%{transform:translateX(8px)}
+      60%{transform:translateX(-5px)}
+      80%{transform:translateX(5px)}
+    }`;
+  document.head.appendChild(style);
+</script>
+</body>
+</html>
