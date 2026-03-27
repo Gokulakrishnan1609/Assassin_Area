@@ -165,5 +165,4 @@ if __name__ == "__main__":
         print("[!] Database not found. Run: python init_db.py")
     else:
         print("[+] Database found. Starting Flask app...")
-    
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    app.run()
